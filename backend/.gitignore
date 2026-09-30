@@ -35,3 +35,9 @@ htmlcov/
 
 # Logs
 *.log
+
+# Secrets
+firebase-service-account.json
+
+# Public data files
+data/*.csv
