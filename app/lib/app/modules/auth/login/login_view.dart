@@ -28,13 +28,19 @@ class LoginView extends GetView<LoginController> {
               const SizedBox(height: 12),
               Text('로그인하고\n서비스 시작하기', style: AppTextStyles.title),
               const SizedBox(height: 30),
-              const _Field(
+              _Field(
                 label: '이메일',
                 hint: '이메일을 입력해주세요',
+                controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 30),
-              const _Field(label: '비밀번호', hint: '비밀번호를 입력해주세요', obscure: true),
+              _Field(
+                label: '비밀번호',
+                hint: '비밀번호를 입력해주세요',
+                controller: controller.passwordController,
+                obscure: true,
+              ),
               const SizedBox(height: 40),
               const Spacer(),
               Center(
@@ -62,9 +68,21 @@ class LoginView extends GetView<LoginController> {
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Get.offAllNamed(Routes.home),
-                  child: const Text('로그인'),
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed:
+                        controller.isLoading.value ? null : controller.login,
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.surface,
+                            ),
+                          )
+                        : const Text('로그인'),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -80,12 +98,14 @@ class _Field extends StatelessWidget {
   const _Field({
     required this.label,
     required this.hint,
+    required this.controller,
     this.obscure = false,
     this.keyboardType,
   });
 
   final String label;
   final String hint;
+  final TextEditingController controller;
   final bool obscure;
   final TextInputType? keyboardType;
 
@@ -97,12 +117,15 @@ class _Field extends StatelessWidget {
         Text(label, style: AppTextStyles.bodyStrong),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            hintStyle:
+                AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
         ),
       ],
