@@ -3,7 +3,7 @@ import hashlib
 import sys
 from pathlib import Path
 
-from sqlmodel import Session, delete
+from sqlmodel import Session, delete, select
 
 from app.db.session import create_db_and_tables, engine
 from app.models import Company, LaborCondition, Violation
@@ -95,10 +95,20 @@ def run(path: Path) -> None:
 
     inserted = 0
     with Session(engine) as session:
-        session.exec(delete(Violation))
-        session.exec(delete(LaborCondition))
-        session.exec(delete(Company))
-        session.commit()
+        existing_ids = session.exec(
+            select(Company.id).where(Company.id.like("pub_%"))
+        ).all()
+        if existing_ids:
+            session.exec(
+                delete(Violation).where(Violation.company_id.in_(existing_ids))
+            )
+            session.exec(
+                delete(LaborCondition).where(
+                    LaborCondition.company_id.in_(existing_ids)
+                )
+            )
+            session.exec(delete(Company).where(Company.id.in_(existing_ids)))
+            session.commit()
 
         for row in reader:
             name = (row.get(keys["name"]) or "").strip() if keys["name"] else ""

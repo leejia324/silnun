@@ -83,9 +83,12 @@ COMPANIES = [
 def run() -> None:
     create_db_and_tables()
     with Session(engine) as session:
-        session.exec(delete(Violation))
-        session.exec(delete(LaborCondition))
-        session.exec(delete(Company))
+        ids = [d["id"] for d in COMPANIES]
+        session.exec(delete(Violation).where(Violation.company_id.in_(ids)))
+        session.exec(
+            delete(LaborCondition).where(LaborCondition.company_id.in_(ids))
+        )
+        session.exec(delete(Company).where(Company.id.in_(ids)))
         session.commit()
 
         for data in COMPANIES:
