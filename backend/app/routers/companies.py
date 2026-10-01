@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
+from sqlmodel import Session, or_, select
 
 from app.core.auth import get_current_uid
 from app.core.errors import not_found
@@ -23,7 +23,13 @@ def search_companies(
     uid: str = Depends(get_current_uid),
     session: Session = Depends(get_session),
 ):
-    statement = select(Company).where(Company.name.contains(q))
+    statement = select(Company).where(
+        or_(
+            Company.name.contains(q),
+            Company.category.contains(q),
+            Company.region.contains(q),
+        )
+    )
     return session.exec(statement).all()
 
 
