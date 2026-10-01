@@ -7,22 +7,22 @@ class AppTextStyles {
   AppTextStyles._();
 
   static TextStyle get display => GoogleFonts.notoSansKr(
-        fontSize: 26,
-        fontWeight: FontWeight.w800,
+        fontSize: 23,
+        fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         height: 1.3,
       );
 
   static TextStyle get title => GoogleFonts.notoSansKr(
-        fontSize: 26,
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
         height: 1.35,
       );
 
   static TextStyle get heading => GoogleFonts.notoSansKr(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
         height: 1.4,
       );
