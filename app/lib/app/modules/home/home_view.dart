@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -37,34 +38,47 @@ class HomeView extends GetView<HomeController> {
           child: BottomNavigationBar(
             currentIndex: controller.currentIndex.value,
             onTap: controller.changeTab,
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.fact_check_outlined),
-                activeIcon: Icon(Icons.fact_check),
+                icon: _navIcon('check.svg', false),
+                activeIcon: _navIcon('check fill.svg', true),
                 label: '체크리스트',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.search),
+                icon: _navIcon('search.svg', false),
+                activeIcon: _navIcon('search.svg', true),
                 label: '검색',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
+                icon: _navIcon('home.svg', false),
+                activeIcon: _navIcon('home fill.svg', true),
                 label: '홈',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today_outlined),
-                activeIcon: Icon(Icons.calendar_today),
+                icon: _navIcon('calendar.svg', false),
+                activeIcon: _navIcon('calendar.svg', true),
                 label: '일정',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
+                icon: _navIcon('my.svg', false),
+                activeIcon: _navIcon('my.svg', true),
                 label: '마이페이지',
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _navIcon(String name, bool active) {
+    return SvgPicture.asset(
+      'assets/svg/bottom icon/$name',
+      width: 24,
+      height: 24,
+      colorFilter: ColorFilter.mode(
+        active ? AppColors.primary : AppColors.textDisabled,
+        BlendMode.srcIn,
       ),
     );
   }
