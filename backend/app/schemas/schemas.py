@@ -16,6 +16,7 @@ class UserUpdate(BaseModel):
 class CompanySummary(BaseModel):
     id: str
     name: str
+    category: str | None = None
     region: str | None = None
     risk_level: str
 
