@@ -17,4 +17,9 @@ class CompanyRepository {
     final res = await ApiClient.dio.get('/companies/$id');
     return CompanyDetail.fromJson(res.data as Map<String, dynamic>);
   }
+
+  Future<int> reviewCount(String id) async {
+    final res = await ApiClient.dio.get('/companies/$id/reviews');
+    return (res.data as List).length;
+  }
 }
