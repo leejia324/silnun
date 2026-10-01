@@ -38,7 +38,7 @@ class DashboardView extends GetView<DashboardController> {
                       icon: Icons.fact_check_outlined,
                       title: '체크리스트',
                       subtitle: '실습 준비 확인',
-                      onTap: () => _goTab(2),
+                      onTap: () => _goTab(0),
                     ),
                   ),
                   const SizedBox(width: 12),

@@ -13,9 +13,9 @@ class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
   static const _tabs = [
-    DashboardView(),
-    SearchView(),
     ChecklistListView(),
+    SearchView(),
+    DashboardView(),
     ScheduleView(),
     MypageView(),
   ];
@@ -39,18 +39,18 @@ class HomeView extends GetView<HomeController> {
             onTap: controller.changeTab,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: '홈',
+                icon: Icon(Icons.fact_check_outlined),
+                activeIcon: Icon(Icons.fact_check),
+                label: '체크리스트',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.search),
                 label: '검색',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.fact_check_outlined),
-                activeIcon: Icon(Icons.fact_check),
-                label: '체크리스트',
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: '홈',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today_outlined),
