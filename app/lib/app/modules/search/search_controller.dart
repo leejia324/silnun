@@ -9,11 +9,19 @@ import '../../routes/app_routes.dart';
 class CompanySearchController extends GetxController {
   final _repository = CompanyRepository();
   final queryController = TextEditingController();
+  final focusNode = FocusNode();
 
   final results = <CompanySummary>[].obs;
   final recentSearches = <String>[].obs;
   final isLoading = false.obs;
   final hasSearched = false.obs;
+  final isFocused = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    focusNode.addListener(() => isFocused.value = focusNode.hasFocus);
+  }
 
   Future<void> search([String? term]) async {
     final query = (term ?? queryController.text).trim();
@@ -22,6 +30,7 @@ class CompanySearchController extends GetxController {
       return;
     }
     queryController.text = query;
+    focusNode.unfocus();
     _addRecent(query);
 
     isLoading.value = true;
@@ -59,6 +68,7 @@ class CompanySearchController extends GetxController {
   @override
   void onClose() {
     queryController.dispose();
+    focusNode.dispose();
     super.onClose();
   }
 }

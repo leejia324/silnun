@@ -23,6 +23,7 @@ class SearchView extends GetView<CompanySearchController> {
               const SizedBox(height: 16),
               TextField(
                 controller: controller.queryController,
+                focusNode: controller.focusNode,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => controller.search(),
                 decoration: InputDecoration(
@@ -50,6 +51,9 @@ class SearchView extends GetView<CompanySearchController> {
         child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
+    if (controller.isFocused.value && controller.recentSearches.isNotEmpty) {
+      return _recentSearches();
+    }
     if (controller.hasSearched.value) {
       if (controller.results.isEmpty) {
         return _emptyResult();
@@ -57,7 +61,8 @@ class SearchView extends GetView<CompanySearchController> {
       return ListView.separated(
         padding: const EdgeInsets.only(bottom: 20),
         itemCount: controller.results.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) =>
+            const Divider(height: 1, color: AppColors.border),
         itemBuilder: (_, i) => _CompanyCard(
           company: controller.results[i],
           onTap: () => controller.openCompany(controller.results[i].id),
@@ -153,67 +158,71 @@ class _CompanyCard extends StatelessWidget {
   final CompanySummary company;
   final VoidCallback onTap;
 
+  String get _statusLabel {
+    switch (company.riskLevel) {
+      case 'no_data':
+        return '정보 없음';
+      case 'good':
+        return '양호';
+      default:
+        return '확인 필요';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final color = AppColors.riskColor(company.riskLevel);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    company.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.bodyStrong,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          company.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.heading,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration:
+                            BoxDecoration(color: color, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _statusLabel,
+                        style: AppTextStyles.bodyStrong.copyWith(color: color),
+                      ),
+                    ],
                   ),
-                  if (company.region != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      company.region!,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textSecondary),
-                    ),
-                  ],
+                  const SizedBox(height: 6),
+                  Text(
+                    [company.category, company.region]
+                        .whereType<String>()
+                        .where((e) => e.isNotEmpty)
+                        .join('   '),
+                    style: AppTextStyles.body
+                        .copyWith(color: AppColors.textDisabled),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            _RiskBadge(level: company.riskLevel),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textDisabled, size: 24),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RiskBadge extends StatelessWidget {
-  const _RiskBadge({required this.level});
-
-  final String level;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.riskSurface(level),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        AppColors.riskLabel(level),
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.riskColor(level),
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
