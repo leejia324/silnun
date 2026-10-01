@@ -12,4 +12,9 @@ class CompanyRepository {
         .map((e) => CompanySummary.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  Future<CompanyDetail> detail(String id) async {
+    final res = await ApiClient.dio.get('/companies/$id');
+    return CompanyDetail.fromJson(res.data as Map<String, dynamic>);
+  }
 }
