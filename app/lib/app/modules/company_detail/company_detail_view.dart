@@ -58,9 +58,21 @@ class CompanyDetailView extends GetView<CompanyDetailController> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: controller.startChecklist,
-              child: const Text('체크리스트 시작하기'),
+            child: Obx(
+              () => ElevatedButton(
+                onPressed:
+                    controller.isStarting.value ? null : controller.startChecklist,
+                child: controller.isStarting.value
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.surface,
+                        ),
+                      )
+                    : const Text('체크리스트 시작하기'),
+              ),
             ),
           ),
         ),
