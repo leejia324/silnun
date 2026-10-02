@@ -16,11 +16,21 @@ class CompanySearchController extends GetxController {
   final isLoading = false.obs;
   final hasSearched = false.obs;
   final isFocused = false.obs;
+  final queryText = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     focusNode.addListener(() => isFocused.value = focusNode.hasFocus);
+    queryController.addListener(() => queryText.value = queryController.text);
+  }
+
+  void clear() {
+    queryController.clear();
+    queryText.value = '';
+    results.clear();
+    hasSearched.value = false;
+    focusNode.requestFocus();
   }
 
   Future<void> search([String? term]) async {

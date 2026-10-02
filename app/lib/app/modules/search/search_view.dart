@@ -32,6 +32,15 @@ class SearchView extends GetView<CompanySearchController> {
                       .copyWith(color: AppColors.textDisabled),
                   prefixIcon:
                       const Icon(Icons.search, color: AppColors.textSecondary),
+                  suffixIcon: Obx(
+                    () => controller.queryText.value.isEmpty
+                        ? const SizedBox.shrink()
+                        : IconButton(
+                            icon: const Icon(Icons.cancel,
+                                color: AppColors.textDisabled, size: 20),
+                            onPressed: controller.clear,
+                          ),
+                  ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
