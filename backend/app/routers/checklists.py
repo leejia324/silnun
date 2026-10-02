@@ -27,9 +27,11 @@ def build_checklist_read(session: Session, checklist: Checklist) -> ChecklistRea
     items = session.exec(
         select(ChecklistItem).where(ChecklistItem.checklist_id == checklist.id)
     ).all()
+    company = session.get(Company, checklist.company_id)
     return ChecklistRead(
         id=checklist.id,
         company_id=checklist.company_id,
+        company_name=company.name if company else None,
         status=checklist.status,
         progress=checklist.progress,
         items=items,
@@ -67,6 +69,15 @@ def create_checklist(
     company = session.get(Company, payload.company_id)
     if company is None:
         raise not_found("기업을 찾을 수 없습니다.")
+
+    existing = session.exec(
+        select(Checklist).where(
+            Checklist.user_id == uid,
+            Checklist.company_id == payload.company_id,
+        )
+    ).first()
+    if existing is not None:
+        return build_checklist_read(session, existing)
 
     checklist = Checklist(user_id=uid, company_id=payload.company_id)
     session.add(checklist)

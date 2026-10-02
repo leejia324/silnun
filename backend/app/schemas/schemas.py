@@ -76,6 +76,8 @@ class RecentSearchCreate(BaseModel):
 
 
 class ChecklistItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     label: str
     checked: bool
@@ -84,6 +86,7 @@ class ChecklistItemRead(BaseModel):
 class ChecklistRead(BaseModel):
     id: int
     company_id: str
+    company_name: str | None = None
     status: str
     progress: float
     items: list[ChecklistItemRead] = []
