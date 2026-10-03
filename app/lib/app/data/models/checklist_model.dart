@@ -3,17 +3,23 @@ class ChecklistItem {
     required this.id,
     required this.label,
     required this.checked,
+    this.category = '',
+    this.warning = false,
   });
 
   final int id;
   final String label;
   final bool checked;
+  final String category;
+  final bool warning;
 
   factory ChecklistItem.fromJson(Map<String, dynamic> json) {
     return ChecklistItem(
       id: json['id'] as int,
       label: json['label'] as String,
       checked: json['checked'] as bool? ?? false,
+      category: json['category'] as String? ?? '',
+      warning: json['warning'] as bool? ?? false,
     );
   }
 }

@@ -64,10 +64,7 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
               ],
             ),
             const SizedBox(height: 24),
-            ...c.items.map((item) => _ItemTile(
-                  item: item,
-                  onTap: () => controller.toggle(item),
-                )),
+            ..._buildGrouped(c.items),
           ],
         );
       }),
@@ -102,6 +99,22 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
         );
       }),
     );
+  }
+
+  List<Widget> _buildGrouped(List<ChecklistItem> items) {
+    final widgets = <Widget>[];
+    String? current;
+    for (final item in items) {
+      if (item.category != current) {
+        current = item.category;
+        widgets.add(Padding(
+          padding: EdgeInsets.only(top: widgets.isEmpty ? 0 : 20, bottom: 4),
+          child: Text(item.category, style: AppTextStyles.heading),
+        ));
+      }
+      widgets.add(_ItemTile(item: item, onTap: () => controller.toggle(item)));
+    }
+    return widgets;
   }
 
   Widget _completedBanner() {
@@ -168,6 +181,32 @@ class _ItemTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (item.warning) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerSurface,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        size: 13, color: AppColors.dangerStrong),
+                    const SizedBox(width: 4),
+                    Text(
+                      '위반 이력',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.dangerStrong,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
