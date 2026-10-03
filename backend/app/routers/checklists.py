@@ -6,9 +6,17 @@ from sqlmodel import Session, select
 from app.core.auth import get_current_uid
 from app.core.errors import not_found
 from app.db.session import get_session
-from app.models import Checklist, ChecklistItem, Company, Schedule
+from app.models import (
+    Checklist,
+    ChecklistItem,
+    Company,
+    LaborCondition,
+    Schedule,
+    Violation,
+)
 from app.schemas.schemas import (
     ChecklistCreate,
+    ChecklistItemRead,
     ChecklistItemUpdate,
     ChecklistRead,
 )
@@ -16,11 +24,42 @@ from app.schemas.schemas import (
 router = APIRouter(prefix="/checklists", tags=["checklists"])
 
 DEFAULT_ITEMS = [
-    "안전교육 수료 확인",
-    "보호장비 지급 여부 확인",
-    "근로계약서 작성 확인",
-    "비상연락망 확보",
+    ("실습 전 준비", "표준협약서 체결 확인", None),
+    ("실습 전 준비", "실습기간·실습시간 명시 확인", None),
+    ("실습 전 준비", "현장지도인 지정 확인", None),
+    ("실습 전 준비", "산재보험 가입 확인", None),
+    ("실습 전 준비", "실습수당 명시 확인", None),
+    ("실습 전 준비", "직무 내용 일치 확인", None),
+    ("안전·보호장비", "안전보건교육 이수", "safetyEducation"),
+    ("안전·보호장비", "보호장비 지급", "protectiveGear"),
+    ("안전·보호장비", "위험작업 미배치 확인", "dangerousWork"),
+    ("안전·보호장비", "비상연락체계 안내", None),
+    ("안전·보호장비", "소방·대피 안내", None),
+    ("근로조건", "실습시간 상한 준수", "workHours"),
+    ("근로조건", "휴게시간 보장", None),
+    ("근로조건", "야간·휴일 실습 금지 확인", None),
+    ("근로조건", "최저임금 준수", "minimumWage"),
+    ("근로조건", "부당한 사적 업무 지시 없음", None),
+    ("실습 중 지속 확인", "주간 실습 일지 작성", None),
+    ("실습 중 지속 확인", "지도교사 방문·연락 확인", None),
+    ("실습 중 지속 확인", "이상 징후 신고 경로 인지", None),
+    ("실습 중 지속 확인", "협약 내용 변경 여부 확인", None),
 ]
+
+LINK_KEYWORDS = {
+    "safetyEducation": "안전교육",
+    "protectiveGear": "보호장비",
+    "dangerousWork": "위험",
+}
+
+
+def _has_violation(link_key: str | None, noncompliant: set[str], descs: str) -> bool:
+    if link_key is None:
+        return False
+    if link_key in noncompliant:
+        return True
+    keyword = LINK_KEYWORDS.get(link_key)
+    return bool(keyword and keyword in descs)
 
 
 def build_checklist_read(session: Session, checklist: Checklist) -> ChecklistRead:
@@ -28,13 +67,35 @@ def build_checklist_read(session: Session, checklist: Checklist) -> ChecklistRea
         select(ChecklistItem).where(ChecklistItem.checklist_id == checklist.id)
     ).all()
     company = session.get(Company, checklist.company_id)
+
+    labor = session.exec(
+        select(LaborCondition).where(
+            LaborCondition.company_id == checklist.company_id
+        )
+    ).all()
+    violations = session.exec(
+        select(Violation).where(Violation.company_id == checklist.company_id)
+    ).all()
+    noncompliant = {lc.type for lc in labor if not lc.compliant}
+    descs = " ".join(v.description or "" for v in violations)
+
+    item_reads = [
+        ChecklistItemRead(
+            id=it.id,
+            category=it.category,
+            label=it.label,
+            checked=it.checked,
+            warning=_has_violation(it.link_key, noncompliant, descs),
+        )
+        for it in items
+    ]
     return ChecklistRead(
         id=checklist.id,
         company_id=checklist.company_id,
         company_name=company.name if company else None,
         status=checklist.status,
         progress=checklist.progress,
-        items=items,
+        items=item_reads,
     )
 
 
@@ -84,8 +145,15 @@ def create_checklist(
     session.commit()
     session.refresh(checklist)
 
-    for label in DEFAULT_ITEMS:
-        session.add(ChecklistItem(checklist_id=checklist.id, label=label))
+    for category, label, link_key in DEFAULT_ITEMS:
+        session.add(
+            ChecklistItem(
+                checklist_id=checklist.id,
+                category=category,
+                label=label,
+                link_key=link_key,
+            )
+        )
 
     schedule = Schedule(
         user_id=uid,

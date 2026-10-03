@@ -58,8 +58,10 @@ class Checklist(SQLModel, table=True):
 class ChecklistItem(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     checklist_id: int = Field(foreign_key="checklist.id", index=True)
+    category: str = ""
     label: str
     checked: bool = False
+    link_key: str | None = None
 
 
 class Schedule(SQLModel, table=True):
