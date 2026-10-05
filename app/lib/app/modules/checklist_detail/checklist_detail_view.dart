@@ -34,37 +34,52 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
           );
         }
         final percent = (c.progress * 100).round();
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(c.companyName ?? '체크리스트', style: AppTextStyles.title),
-            const SizedBox(height: 16),
-            if (c.isCompleted) _completedBanner(),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: c.progress,
-                      minHeight: 8,
-                      backgroundColor: AppColors.border,
-                      color: c.isCompleted
-                          ? AppColors.good
-                          : AppColors.primary,
-                    ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(c.companyName ?? '체크리스트',
+                      style: AppTextStyles.title),
+                  const SizedBox(height: 16),
+                  if (c.isCompleted) _completedBanner(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: c.progress,
+                            minHeight: 8,
+                            backgroundColor: AppColors.border,
+                            color: c.isCompleted
+                                ? AppColors.good
+                                : AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text('$percent%',
+                          style: AppTextStyles.bodyStrong.copyWith(
+                            color: c.isCompleted
+                                ? AppColors.good
+                                : AppColors.primary,
+                          )),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text('$percent%',
-                    style: AppTextStyles.bodyStrong.copyWith(
-                      color:
-                          c.isCompleted ? AppColors.good : AppColors.primary,
-                    )),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            ..._buildGrouped(c.items),
+            const Divider(height: 1, color: AppColors.border),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                children: _buildGrouped(c.items),
+              ),
+            ),
           ],
         );
       }),
