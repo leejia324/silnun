@@ -11,43 +11,46 @@ class SearchView extends GetView<CompanySearchController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('기업 검색', style: AppTextStyles.title),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller.queryController,
-                focusNode: controller.focusNode,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => controller.search(),
-                decoration: InputDecoration(
-                  hintText: '기업명을 검색해보세요',
-                  hintStyle: AppTextStyles.body
-                      .copyWith(color: AppColors.textDisabled),
-                  prefixIcon:
-                      const Icon(Icons.search, color: AppColors.textSecondary),
-                  suffixIcon: Obx(
-                    () => controller.queryText.value.isEmpty
-                        ? const SizedBox.shrink()
-                        : IconButton(
-                            icon: const Icon(Icons.cancel,
-                                color: AppColors.textDisabled, size: 20),
-                            onPressed: controller.clear,
-                          ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('기업 검색', style: AppTextStyles.title),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller.queryController,
+                  focusNode: controller.focusNode,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => controller.search(),
+                  decoration: InputDecoration(
+                    hintText: '기업명을 검색해보세요',
+                    hintStyle: AppTextStyles.body
+                        .copyWith(color: AppColors.textDisabled),
+                    prefixIcon:
+                        const Icon(Icons.search, color: AppColors.textSecondary),
+                    suffixIcon: Obx(
+                      () => controller.queryText.value.isEmpty
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              icon: const Icon(Icons.cancel,
+                                  color: AppColors.textDisabled, size: 20),
+                              onPressed: controller.clear,
+                            ),
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(child: Obx(_buildBody)),
-            ],
+                const SizedBox(height: 20),
+                Expanded(child: Obx(_buildBody)),
+              ],
+            ),
           ),
         ),
       ),
