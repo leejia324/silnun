@@ -55,7 +55,7 @@ class ChecklistDetailController extends GetxController {
     try {
       checklist.value = await _repository.submit(current.id);
       _refreshList();
-      AppSnackbar.success('체크리스트를 제출했어요.');
+      AppSnackbar.success('체크리스트를 완료했어요.');
     } catch (_) {
       AppSnackbar.error('제출하지 못했어요.');
     } finally {

@@ -85,7 +85,6 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
       }),
       bottomNavigationBar: Obx(() {
         final c = controller.checklist.value;
-        final ready = c != null && c.progress >= 1.0 && !c.isCompleted;
         if (c == null) {
           return const SizedBox.shrink();
         }
@@ -95,9 +94,9 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: ready && !controller.isSubmitting.value
-                    ? controller.submit
-                    : null,
+                onPressed: c.isCompleted || controller.isSubmitting.value
+                    ? null
+                    : controller.submit,
                 child: controller.isSubmitting.value
                     ? const SizedBox(
                         width: 22,
@@ -107,7 +106,7 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
                           color: AppColors.surface,
                         ),
                       )
-                    : Text(c.isCompleted ? '제출 완료' : '제출하기'),
+                    : Text(c.isCompleted ? '완료됨' : '완료하기'),
               ),
             ),
           ),
@@ -145,7 +144,7 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
           const Icon(Icons.check_circle_rounded, color: AppColors.good),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('체크리스트를 모두 완료했어요',
+            child: Text('체크리스트를 완료했어요',
                 style:
                     AppTextStyles.bodyStrong.copyWith(color: AppColors.good)),
           ),
