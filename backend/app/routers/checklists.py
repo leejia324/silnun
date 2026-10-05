@@ -212,7 +212,7 @@ def submit_checklist(
     if checklist is None or checklist.user_id != uid:
         raise not_found()
     checklist.status = "completed"
-    checklist.progress = 1.0
+    recalc_progress(session, checklist)
     session.add(checklist)
     session.commit()
     session.refresh(checklist)
