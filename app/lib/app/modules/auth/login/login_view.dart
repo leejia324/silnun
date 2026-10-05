@@ -11,82 +11,95 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Get.back(),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Get.back(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              Text('로그인하고\n서비스 시작하기', style: AppTextStyles.title),
-              const SizedBox(height: 30),
-              _Field(
-                label: '이메일',
-                hint: '이메일을 입력해주세요',
-                controller: controller.emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 30),
-              _Field(
-                label: '비밀번호',
-                hint: '비밀번호를 입력해주세요',
-                controller: controller.passwordController,
-                obscure: true,
-              ),
-              const SizedBox(height: 40),
-              const Spacer(),
-              Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '계정이 없으신가요? ',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Get.toNamed(Routes.signup),
-                      child: Text(
-                        '가입하기',
-                        style: AppTextStyles.bodyStrong.copyWith(
-                          color: AppColors.primary,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        Text('로그인하고\n서비스 시작하기', style: AppTextStyles.title),
+                        const SizedBox(height: 30),
+                        _Field(
+                          label: '이메일',
+                          hint: '이메일을 입력해주세요',
+                          controller: controller.emailController,
+                          keyboardType: TextInputType.emailAddress,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: Obx(
-                  () => ElevatedButton(
-                    onPressed:
-                        controller.isLoading.value ? null : controller.login,
-                    child: controller.isLoading.value
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.surface,
+                        const SizedBox(height: 30),
+                        _Field(
+                          label: '비밀번호',
+                          hint: '비밀번호를 입력해주세요',
+                          controller: controller.passwordController,
+                          obscure: true,
+                        ),
+                        const SizedBox(height: 40),
+                        const Spacer(),
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '계정이 없으신가요? ',
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Get.toNamed(Routes.signup),
+                                child: Text(
+                                  '가입하기',
+                                  style: AppTextStyles.bodyStrong.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Obx(
+                            () => ElevatedButton(
+                              onPressed: controller.isLoading.value
+                                  ? null
+                                  : controller.login,
+                              child: controller.isLoading.value
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.surface,
+                                      ),
+                                    )
+                                  : const Text('로그인'),
                             ),
-                          )
-                        : const Text('로그인'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
@@ -122,10 +135,13 @@ class _Field extends StatelessWidget {
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle:
-                AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            hintStyle: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
           ),
         ),
       ],
