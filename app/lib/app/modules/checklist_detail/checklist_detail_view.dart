@@ -96,7 +96,7 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
               child: ElevatedButton(
                 onPressed: c.isCompleted || controller.isSubmitting.value
                     ? null
-                    : controller.submit,
+                    : () => _confirmComplete(context),
                 child: controller.isSubmitting.value
                     ? const SizedBox(
                         width: 22,
@@ -115,6 +115,63 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
     );
   }
 
+  void _confirmComplete(BuildContext context) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('체크리스트를 완료하시겠습니까?', style: AppTextStyles.heading),
+              const SizedBox(height: 10),
+              Text(
+                '완료한 뒤에는 수정할 수 없습니다.',
+                style: AppTextStyles.body
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.background,
+                        foregroundColor: AppColors.textSecondary,
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: AppTextStyles.button,
+                      ),
+                      child: const Text('취소'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.submit();
+                      },
+                      child: const Text('확인'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _buildGrouped(List<ChecklistItem> items) {
     final widgets = <Widget>[];
     String? current;
@@ -126,7 +183,12 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
           child: Text(item.category, style: AppTextStyles.heading),
         ));
       }
-      widgets.add(_ItemTile(item: item, onTap: () => controller.toggle(item)));
+      final completed = controller.checklist.value?.isCompleted ?? false;
+      widgets.add(_ItemTile(
+        item: item,
+        completed: completed,
+        onTap: completed ? null : () => controller.toggle(item),
+      ));
     }
     return widgets;
   }
@@ -155,13 +217,19 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
 }
 
 class _ItemTile extends StatelessWidget {
-  const _ItemTile({required this.item, required this.onTap});
+  const _ItemTile({
+    required this.item,
+    required this.completed,
+    this.onTap,
+  });
 
   final ChecklistItem item;
-  final VoidCallback onTap;
+  final bool completed;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final showX = completed && !item.checked;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -173,16 +241,27 @@ class _ItemTile extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: item.checked ? AppColors.primary : AppColors.surface,
+                color: item.checked
+                    ? AppColors.primary
+                    : showX
+                        ? AppColors.dangerSurface
+                        : AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: item.checked ? AppColors.primary : AppColors.borderStrong,
+                  color: item.checked
+                      ? AppColors.primary
+                      : showX
+                          ? AppColors.danger
+                          : AppColors.borderStrong,
                   width: 1.5,
                 ),
               ),
               child: item.checked
                   ? const Icon(Icons.check, size: 16, color: AppColors.surface)
-                  : null,
+                  : showX
+                      ? const Icon(Icons.close,
+                          size: 16, color: AppColors.danger)
+                      : null,
             ),
             const SizedBox(width: 14),
             Expanded(
