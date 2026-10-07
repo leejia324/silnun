@@ -85,7 +85,7 @@ class ChecklistDetailView extends GetView<ChecklistDetailController> {
       }),
       bottomNavigationBar: Obx(() {
         final c = controller.checklist.value;
-        if (c == null) {
+        if (c == null || c.isCompleted) {
           return const SizedBox.shrink();
         }
         return SafeArea(
@@ -244,7 +244,7 @@ class _ItemTile extends StatelessWidget {
                 color: item.checked
                     ? AppColors.primary
                     : showX
-                        ? AppColors.dangerSurface
+                        ? AppColors.danger
                         : AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
@@ -260,7 +260,7 @@ class _ItemTile extends StatelessWidget {
                   ? const Icon(Icons.check, size: 16, color: AppColors.surface)
                   : showX
                       ? const Icon(Icons.close,
-                          size: 16, color: AppColors.danger)
+                          size: 16, color: AppColors.surface)
                       : null,
             ),
             const SizedBox(width: 14),
