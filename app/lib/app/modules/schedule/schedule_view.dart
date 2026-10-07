@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -14,12 +15,12 @@ class ScheduleView extends GetView<ScheduleController> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('일정', style: AppTextStyles.title),
@@ -48,118 +49,164 @@ class ScheduleView extends GetView<ScheduleController> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return const Center(
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary),
-                    );
-                  }
-                  if (controller.schedules.isEmpty) {
-                    return _empty();
-                  }
-                  return RefreshIndicator(
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () => TableCalendar<ScheduleItem>(
+                locale: 'ko_KR',
+                firstDay: DateTime(2020),
+                lastDay: DateTime(2100),
+                focusedDay: controller.focusedDay.value,
+                selectedDayPredicate: (d) =>
+                    isSameDay(d, controller.selectedDay.value),
+                eventLoader: controller.eventsOf,
+                onDaySelected: controller.selectDay,
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: AppTextStyles.bodyStrong,
+                  leftChevronIcon: const Icon(Icons.chevron_left,
+                      color: AppColors.textSecondary),
+                  rightChevronIcon: const Icon(Icons.chevron_right,
+                      color: AppColors.textSecondary),
+                ),
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: AppTextStyles.caption,
+                  weekendStyle: AppTextStyles.caption,
+                ),
+                calendarStyle: CalendarStyle(
+                  outsideDaysVisible: false,
+                  todayDecoration: const BoxDecoration(
+                    color: AppColors.primarySurface,
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle:
+                      AppTextStyles.body.copyWith(color: AppColors.primary),
+                  selectedDecoration: const BoxDecoration(
                     color: AppColors.primary,
-                    onRefresh: controller.load,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      itemCount: controller.schedules.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _ScheduleCard(
-                        schedule: controller.schedules[i],
-                        onTap: () => _showEditor(context,
-                            existing: controller.schedules[i]),
-                        onDelete: () =>
-                            controller.remove(controller.schedules[i].id),
-                      ),
-                    ),
-                  );
-                }),
+                    shape: BoxShape.circle,
+                  ),
+                  selectedTextStyle:
+                      AppTextStyles.body.copyWith(color: AppColors.surface),
+                  markerDecoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  markersMaxCount: 1,
+                ),
               ),
-            ],
-          ),
+            ),
+            const Divider(height: 1, color: AppColors.border),
+            Expanded(
+              child: Obx(() {
+                final items = controller.selectedSchedules;
+                if (items.isEmpty) {
+                  return Center(
+                    child: Text('이 날짜에 일정이 없어요',
+                        style: AppTextStyles.body
+                            .copyWith(color: AppColors.textDisabled)),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (_, i) => _ScheduleCard(
+                    schedule: items[i],
+                    onTap: () => _showEditor(context, existing: items[i]),
+                    onDelete: () => controller.remove(items[i].id),
+                  ),
+                );
+              }),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _empty() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.calendar_today_outlined,
-              size: 56, color: AppColors.textDisabled),
-          const SizedBox(height: 16),
-          Text('일정이 없어요', style: AppTextStyles.heading),
-          const SizedBox(height: 8),
-          Text(
-            '체크리스트를 시작하면 일정이 자동으로 추가돼요',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showEditor(BuildContext context, {ScheduleItem? existing}) {
-    final titleController =
-        TextEditingController(text: existing?.title ?? '');
-    final selected = Rx<DateTime>(existing?.date ?? DateTime.now());
+    final titleController = TextEditingController(text: existing?.title ?? '');
+    final focused = Rx<DateTime>(existing?.date ?? controller.selectedDay.value);
+    final picked = <DateTime>[
+      existing?.date ?? controller.selectedDay.value,
+    ].obs;
 
     Get.dialog(
       Dialog(
         backgroundColor: AppColors.surface,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(existing == null ? '일정 추가' : '일정 수정',
                   style: AppTextStyles.heading),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(hintText: '일정 제목'),
               ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: selected.value,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    selected.value = picked;
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+              const SizedBox(height: 8),
+              if (existing == null)
+                Text('날짜를 눌러 여러 날 선택할 수 있어요',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSecondary)),
+              const SizedBox(height: 4),
+              Obx(
+                () => TableCalendar<void>(
+                  locale: 'ko_KR',
+                  firstDay: DateTime(2020),
+                  lastDay: DateTime(2100),
+                  focusedDay: focused.value,
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: AppTextStyles.bodyStrong,
+                    leftChevronIcon: const Icon(Icons.chevron_left,
+                        color: AppColors.textSecondary),
+                    rightChevronIcon: const Icon(Icons.chevron_right,
+                        color: AppColors.textSecondary),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined,
-                          size: 18, color: AppColors.textSecondary),
-                      const SizedBox(width: 10),
-                      Obx(() => Text(_fmtDate(selected.value),
-                          style: AppTextStyles.body)),
-                    ],
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: AppTextStyles.caption,
+                    weekendStyle: AppTextStyles.caption,
+                  ),
+                  selectedDayPredicate: (d) =>
+                      picked.any((p) => isSameDay(p, d)),
+                  onDaySelected: (sel, foc) {
+                    focused.value = foc;
+                    if (existing != null) {
+                      picked.value = [sel];
+                      return;
+                    }
+                    final idx = picked.indexWhere((p) => isSameDay(p, sel));
+                    if (idx >= 0) {
+                      picked.removeAt(idx);
+                    } else {
+                      picked.add(sel);
+                    }
+                  },
+                  calendarStyle: CalendarStyle(
+                    outsideDaysVisible: false,
+                    todayDecoration: const BoxDecoration(
+                      color: AppColors.primarySurface,
+                      shape: BoxShape.circle,
+                    ),
+                    todayTextStyle: AppTextStyles.body
+                        .copyWith(color: AppColors.primary),
+                    selectedDecoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    selectedTextStyle: AppTextStyles.body
+                        .copyWith(color: AppColors.surface),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -181,15 +228,14 @@ class ScheduleView extends GetView<ScheduleController> {
                     child: ElevatedButton(
                       onPressed: () {
                         final title = titleController.text.trim();
-                        if (title.isEmpty) {
+                        if (title.isEmpty || picked.isEmpty) {
                           return;
                         }
                         Get.back();
                         if (existing == null) {
-                          controller.create(title, selected.value);
+                          controller.createMany(title, picked.toList());
                         } else {
-                          controller.edit(
-                              existing.id, title, selected.value);
+                          controller.edit(existing.id, title, picked.first);
                         }
                       },
                       child: const Text('확인'),

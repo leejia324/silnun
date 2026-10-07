@@ -9,6 +9,8 @@ class ScheduleController extends GetxController {
 
   final schedules = <ScheduleItem>[].obs;
   final isLoading = false.obs;
+  final focusedDay = DateTime.now().obs;
+  final selectedDay = DateTime.now().obs;
 
   @override
   void onInit() {
@@ -27,11 +29,26 @@ class ScheduleController extends GetxController {
     }
   }
 
-  Future<void> create(String title, DateTime date) async {
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  List<ScheduleItem> eventsOf(DateTime day) =>
+      schedules.where((s) => _sameDay(s.date, day)).toList();
+
+  List<ScheduleItem> get selectedSchedules => eventsOf(selectedDay.value);
+
+  void selectDay(DateTime day, DateTime focused) {
+    selectedDay.value = day;
+    focusedDay.value = focused;
+  }
+
+  Future<void> createMany(String title, List<DateTime> dates) async {
     try {
-      await _repository.create(title, date);
+      for (final d in dates) {
+        await _repository.create(title, d);
+      }
       await load();
-      AppSnackbar.success('일정을 추가했어요.');
+      AppSnackbar.success('일정 ${dates.length}건을 추가했어요.');
     } catch (_) {
       AppSnackbar.error('일정을 추가하지 못했어요.');
     }
