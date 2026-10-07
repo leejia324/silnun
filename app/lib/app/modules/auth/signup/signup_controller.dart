@@ -16,26 +16,35 @@ class SignupController extends GetxController {
   final schoolController = TextEditingController();
   final gradeController = TextEditingController();
   final isLoading = false.obs;
+  final step = 0.obs;
 
-  Future<void> signup() async {
+  void nextStep() {
     final email = emailController.text.trim();
     final password = passwordController.text;
     final confirm = passwordConfirmController.text;
-    final name = nameController.text.trim();
-    final school = schoolController.text.trim();
-    final grade = gradeController.text.trim();
 
-    if (email.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty ||
-        name.isEmpty ||
-        school.isEmpty ||
-        grade.isEmpty) {
+    if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
       AppSnackbar.info('모든 항목을 입력해주세요.');
       return;
     }
     if (password != confirm) {
       AppSnackbar.info('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    step.value = 1;
+  }
+
+  void prevStep() => step.value = 0;
+
+  Future<void> signup() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final name = nameController.text.trim();
+    final school = schoolController.text.trim();
+    final grade = gradeController.text.trim();
+
+    if (name.isEmpty || school.isEmpty || grade.isEmpty) {
+      AppSnackbar.info('모든 항목을 입력해주세요.');
       return;
     }
 
