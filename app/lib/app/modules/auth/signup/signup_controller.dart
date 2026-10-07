@@ -27,11 +27,24 @@ class SignupController extends GetxController {
       AppSnackbar.info('모든 항목을 입력해주세요.');
       return;
     }
+    if (!_isValidEmail(email)) {
+      AppSnackbar.info('이메일 형식이 올바르지 않습니다.');
+      return;
+    }
+    if (password.length < 6) {
+      AppSnackbar.info('비밀번호는 6자 이상이어야 합니다.');
+      return;
+    }
     if (password != confirm) {
       AppSnackbar.info('비밀번호가 일치하지 않습니다.');
       return;
     }
     step.value = 1;
+  }
+
+  bool _isValidEmail(String email) {
+    final pattern = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+    return pattern.hasMatch(email);
   }
 
   void prevStep() => step.value = 0;
