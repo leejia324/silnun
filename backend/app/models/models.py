@@ -6,6 +6,9 @@ from sqlmodel import Field, SQLModel
 class User(SQLModel, table=True):
     uid: str = Field(primary_key=True)
     email: str
+    name: str | None = None
+    school: str | None = None
+    grade: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

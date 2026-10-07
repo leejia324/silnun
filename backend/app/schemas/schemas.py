@@ -6,11 +6,17 @@ from pydantic import BaseModel, ConfigDict
 class UserRead(BaseModel):
     uid: str
     email: str
+    name: str | None = None
+    school: str | None = None
+    grade: str | None = None
     created_at: dt.datetime
 
 
 class UserUpdate(BaseModel):
     email: str | None = None
+    name: str | None = None
+    school: str | None = None
+    grade: str | None = None
 
 
 class CompanySummary(BaseModel):

@@ -33,6 +33,12 @@ def update_me(
     user = get_or_create_user(session, uid)
     if payload.email is not None:
         user.email = payload.email
+    if payload.name is not None:
+        user.name = payload.name
+    if payload.school is not None:
+        user.school = payload.school
+    if payload.grade is not None:
+        user.grade = payload.grade
     session.add(user)
     session.commit()
     session.refresh(user)
