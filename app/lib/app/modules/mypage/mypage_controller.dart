@@ -5,7 +5,6 @@ import '../../core/utils/app_snackbar.dart';
 import '../../data/repositories/checklist_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../routes/app_routes.dart';
-import '../home/home_controller.dart';
 
 class MypageController extends GetxController {
   final _checklistRepository = ChecklistRepository();
@@ -54,12 +53,6 @@ class MypageController extends GetxController {
       companyCount.value = list.length;
       completedCount.value = list.where((c) => c.isCompleted).length;
     } catch (_) {}
-  }
-
-  void openChecklists() {
-    if (Get.isRegistered<HomeController>()) {
-      Get.find<HomeController>().changeTab(0);
-    }
   }
 
   void comingSoon() => AppSnackbar.info('준비 중인 기능이에요.');

@@ -90,8 +90,6 @@ class MypageView extends GetView<MypageController> {
               ),
             ),
             const SizedBox(height: 28),
-            _MenuRow(label: '체크리스트 기록', onTap: controller.openChecklists),
-            _divider(),
             _MenuRow(label: '알림 설정', onTap: controller.comingSoon),
             _divider(),
             _MenuRow(label: '계정 정보', onTap: controller.comingSoon),
