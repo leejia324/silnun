@@ -13,10 +13,12 @@ class SignupController extends GetxController {
   final passwordController = TextEditingController();
   final passwordConfirmController = TextEditingController();
   final nameController = TextEditingController();
-  final schoolController = TextEditingController();
   final gradeController = TextEditingController();
   final isLoading = false.obs;
   final step = 0.obs;
+  final school = ''.obs;
+
+  void selectSchool(String name) => school.value = name;
 
   void nextStep() {
     final email = emailController.text.trim();
@@ -53,10 +55,10 @@ class SignupController extends GetxController {
     final email = emailController.text.trim();
     final password = passwordController.text;
     final name = nameController.text.trim();
-    final school = schoolController.text.trim();
+    final schoolName = school.value.trim();
     final grade = gradeController.text.trim();
 
-    if (name.isEmpty || school.isEmpty || grade.isEmpty) {
+    if (name.isEmpty || schoolName.isEmpty || grade.isEmpty) {
       AppSnackbar.info('모든 항목을 입력해주세요.');
       return;
     }
@@ -70,7 +72,7 @@ class SignupController extends GetxController {
       await _userRepository.updateProfile(
         email: email,
         name: name,
-        school: school,
+        school: schoolName,
         grade: grade,
       );
       Get.offAllNamed(Routes.home);
@@ -100,7 +102,6 @@ class SignupController extends GetxController {
     passwordController.dispose();
     passwordConfirmController.dispose();
     nameController.dispose();
-    schoolController.dispose();
     gradeController.dispose();
     super.onClose();
   }
