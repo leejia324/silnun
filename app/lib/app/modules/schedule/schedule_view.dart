@@ -50,9 +50,10 @@ class ScheduleView extends GetView<ScheduleController> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            Obx(
-              () => TableCalendar<ScheduleItem>(
+            const SizedBox(height: 4),
+            Obx(() {
+              controller.schedules.length;
+              return TableCalendar<ScheduleItem>(
                 locale: 'ko_KR',
                 firstDay: DateTime(2020),
                 lastDay: DateTime(2100),
@@ -61,27 +62,33 @@ class ScheduleView extends GetView<ScheduleController> {
                     isSameDay(d, controller.selectedDay.value),
                 eventLoader: controller.eventsOf,
                 onDaySelected: controller.selectDay,
+                onPageChanged: (day) => controller.focusedDay.value = day,
                 headerStyle: HeaderStyle(
                   formatButtonVisible: false,
-                  titleCentered: true,
+                  titleCentered: false,
+                  leftChevronVisible: false,
+                  rightChevronVisible: false,
                   titleTextStyle: AppTextStyles.bodyStrong,
-                  leftChevronIcon: const Icon(Icons.chevron_left,
-                      color: AppColors.textSecondary),
-                  rightChevronIcon: const Icon(Icons.chevron_right,
-                      color: AppColors.textSecondary),
+                  headerPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 ),
+                availableGestures: AvailableGestures.horizontalSwipe,
                 daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: AppTextStyles.caption,
-                  weekendStyle: AppTextStyles.caption,
+                  weekdayStyle: AppTextStyles.caption
+                      .copyWith(color: AppColors.textDisabled),
+                  weekendStyle: AppTextStyles.caption
+                      .copyWith(color: AppColors.textDisabled),
                 ),
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
+                  defaultTextStyle: AppTextStyles.body,
+                  weekendTextStyle: AppTextStyles.body,
                   todayDecoration: const BoxDecoration(
-                    color: AppColors.primarySurface,
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   todayTextStyle:
-                      AppTextStyles.body.copyWith(color: AppColors.primary),
+                      AppTextStyles.body.copyWith(color: AppColors.surface),
                   selectedDecoration: const BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
@@ -89,33 +96,30 @@ class ScheduleView extends GetView<ScheduleController> {
                   selectedTextStyle:
                       AppTextStyles.body.copyWith(color: AppColors.surface),
                   markerDecoration: const BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.danger,
                     shape: BoxShape.circle,
                   ),
+                  markerSize: 5,
                   markersMaxCount: 1,
+                  markerMargin: const EdgeInsets.only(top: 2),
                 ),
-              ),
-            ),
+              );
+            }),
             const Divider(height: 1, color: AppColors.border),
             Expanded(
               child: Obx(() {
-                final items = controller.selectedSchedules;
+                final items = [...controller.schedules]
+                  ..sort((a, b) => a.date.compareTo(b.date));
                 if (items.isEmpty) {
                   return Center(
-                    child: Text('이 날짜에 일정이 없어요',
+                    child: Text('등록된 일정이 없어요',
                         style: AppTextStyles.body
                             .copyWith(color: AppColors.textDisabled)),
                   );
                 }
-                return ListView.separated(
+                return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => _ScheduleCard(
-                    schedule: items[i],
-                    onTap: () => _showEditor(context, existing: items[i]),
-                    onDelete: () => controller.remove(items[i].id),
-                  ),
+                  children: _buildGrouped(context, items),
                 );
               }),
             ),
@@ -123,6 +127,27 @@ class ScheduleView extends GetView<ScheduleController> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildGrouped(BuildContext context, List<ScheduleItem> items) {
+    final widgets = <Widget>[];
+    int? currentMonth;
+    for (final s in items) {
+      if (s.date.month != currentMonth) {
+        currentMonth = s.date.month;
+        widgets.add(Padding(
+          padding: EdgeInsets.only(top: widgets.isEmpty ? 0 : 20, bottom: 8),
+          child: Text('${s.date.month}월',
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textSecondary)),
+        ));
+      }
+      widgets.add(_ScheduleRow(
+        schedule: s,
+        onTap: () => _showEditor(context, existing: s),
+      ));
+    }
+    return widgets;
   }
 
   void _showEditor(BuildContext context, {ScheduleItem? existing}) {
@@ -203,8 +228,23 @@ class ScheduleView extends GetView<ScheduleController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(isEdit ? '일정 수정' : '일정 추가',
-                  style: AppTextStyles.heading),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(isEdit ? '일정 수정' : '일정 추가',
+                      style: AppTextStyles.heading),
+                  if (isEdit)
+                    GestureDetector(
+                      onTap: () {
+                        Get.back();
+                        controller.remove(existing.id);
+                      },
+                      child: Text('삭제',
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.danger)),
+                    ),
+                ],
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: titleController,
@@ -297,36 +337,49 @@ class ScheduleView extends GetView<ScheduleController> {
   }
 }
 
-String _fmtDate(DateTime d) {
-  const days = ['월', '화', '수', '목', '금', '토', '일'];
-  return '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')} (${days[d.weekday - 1]})';
+const _weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+
+String _ddayLabel(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final target = DateTime(date.year, date.month, date.day);
+  final diff = target.difference(today).inDays;
+  if (diff == 0) {
+    return 'D-DAY';
+  }
+  return diff > 0 ? 'D-$diff' : 'D+${-diff}';
 }
 
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({
-    required this.schedule,
-    required this.onTap,
-    required this.onDelete,
-  });
+class _ScheduleRow extends StatelessWidget {
+  const _ScheduleRow({required this.schedule, required this.onTap});
 
   final ScheduleItem schedule;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            SizedBox(
+              width: 32,
+              child: Column(
+                children: [
+                  Text('${schedule.date.day}',
+                      style: AppTextStyles.heading),
+                  const SizedBox(height: 2),
+                  Text(_weekdays[schedule.date.weekday - 1],
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textDisabled)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +398,7 @@ class _ScheduleCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                              horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.primarySurface,
                             borderRadius: BorderRadius.circular(999),
@@ -359,17 +412,12 @@ class _ScheduleCard extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(_fmtDate(schedule.date),
+                  const SizedBox(height: 2),
+                  Text(_ddayLabel(schedule.date),
                       style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textSecondary)),
+                          .copyWith(color: AppColors.danger)),
                 ],
               ),
-            ),
-            GestureDetector(
-              onTap: onDelete,
-              child: const Icon(Icons.delete_outline,
-                  size: 20, color: AppColors.textDisabled),
             ),
           ],
         ),
