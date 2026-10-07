@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../home/home_controller.dart';
+import '../../data/models/checklist_model.dart';
+import '../../data/models/schedule_model.dart';
 import 'dashboard_controller.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -14,44 +15,68 @@ class DashboardView extends GetView<DashboardController> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: controller.load,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              Text('안녕하세요 👋', style: AppTextStyles.body),
-              const SizedBox(height: 4),
-              Text('${controller.displayName}님', style: AppTextStyles.title),
+              Obx(() => Text('${controller.displayName}님',
+                  style: AppTextStyles.title)),
               const SizedBox(height: 4),
               Text(
-                '오늘도 안전한 실습 준비해요',
+                '실습 준비, 실눈과 함께 확인해요',
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 24),
-              _SearchCta(onTap: () => _goTab(1)),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              _searchBar(),
+              const SizedBox(height: 32),
+              _sectionHeader('진행 중인 체크리스트'),
+              const SizedBox(height: 12),
+              Obx(() {
+                if (controller.inProgress.isEmpty) {
+                  return _emptyBox('진행 중인 체크리스트가 없어요');
+                }
+                return Column(
+                  children: controller.inProgress
+                      .map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ChecklistMini(
+                              checklist: c,
+                              onTap: () => controller.openChecklist(c.id),
+                            ),
+                          ))
+                      .toList(),
+                );
+              }),
+              const SizedBox(height: 28),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _MenuCard(
-                      icon: Icons.fact_check_outlined,
-                      title: '체크리스트',
-                      subtitle: '실습 준비 확인',
-                      onTap: () => _goTab(0),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _MenuCard(
-                      icon: Icons.calendar_today_outlined,
-                      title: '일정',
-                      subtitle: '준비 일정 보기',
-                      onTap: () => _goTab(3),
-                    ),
+                  Text('다가오는 일정', style: AppTextStyles.heading),
+                  GestureDetector(
+                    onTap: controller.goSchedule,
+                    child: Text('전체보기',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.textSecondary)),
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Obx(() {
+                if (controller.upcoming.isEmpty) {
+                  return _emptyBox('예정된 일정이 없어요');
+                }
+                return Column(
+                  children: controller.upcoming
+                      .map((s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ScheduleMini(schedule: s),
+                          ))
+                      .toList(),
+                );
+              }),
             ],
           ),
         ),
@@ -59,46 +84,96 @@ class DashboardView extends GetView<DashboardController> {
     );
   }
 
-  void _goTab(int index) => Get.find<HomeController>().changeTab(index);
+  Widget _searchBar() {
+    return GestureDetector(
+      onTap: controller.goSearch,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: AppColors.textSecondary),
+            const SizedBox(width: 10),
+            Text('기업명·업종으로 검색해보세요',
+                style: AppTextStyles.body
+                    .copyWith(color: AppColors.textDisabled)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title) =>
+      Text(title, style: AppTextStyles.heading);
+
+  Widget _emptyBox(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Center(
+        child: Text(message,
+            style:
+                AppTextStyles.body.copyWith(color: AppColors.textDisabled)),
+      ),
+    );
+  }
 }
 
-class _SearchCta extends StatelessWidget {
-  const _SearchCta({required this.onTap});
+class _ChecklistMini extends StatelessWidget {
+  const _ChecklistMini({required this.checklist, required this.onTap});
 
+  final Checklist checklist;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final percent = (checklist.progress * 100).round();
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(18),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '실습처 안전 이력 확인',
-                    style: AppTextStyles.heading
-                        .copyWith(color: AppColors.surface),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '기업명으로 검색해보세요',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.surface.withValues(alpha: 0.85),
+            Text(checklist.companyName ?? '체크리스트',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyStrong),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: checklist.progress,
+                      minHeight: 6,
+                      backgroundColor: AppColors.border,
+                      color: AppColors.primary,
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 10),
+                Text('$percent%',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.primary)),
+              ],
             ),
-            const Icon(Icons.search, color: AppColors.surface, size: 28),
           ],
         ),
       ),
@@ -106,51 +181,53 @@ class _SearchCta extends StatelessWidget {
   }
 }
 
-class _MenuCard extends StatelessWidget {
-  const _MenuCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+class _ScheduleMini extends StatelessWidget {
+  const _ScheduleMini({required this.schedule});
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+  final ScheduleItem schedule;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 22),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 14),
-            Text(title, style: AppTextStyles.bodyStrong),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: AppTextStyles.caption
-                  .copyWith(color: AppColors.textSecondary),
+            child: Text('${schedule.date.day}',
+                style: AppTextStyles.bodyStrong
+                    .copyWith(color: AppColors.primary)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(schedule.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodyStrong),
+                const SizedBox(height: 2),
+                Text(
+                  '${schedule.date.year}.${schedule.date.month.toString().padLeft(2, '0')}.${schedule.date.day.toString().padLeft(2, '0')}',
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
