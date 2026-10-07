@@ -126,11 +126,72 @@ class ScheduleView extends GetView<ScheduleController> {
   }
 
   void _showEditor(BuildContext context, {ScheduleItem? existing}) {
+    final isEdit = existing != null;
     final titleController = TextEditingController(text: existing?.title ?? '');
     final focused = Rx<DateTime>(existing?.date ?? controller.selectedDay.value);
-    final picked = <DateTime>[
-      existing?.date ?? controller.selectedDay.value,
-    ].obs;
+    final single = Rx<DateTime>(existing?.date ?? controller.selectedDay.value);
+    final rangeStart = Rxn<DateTime>(controller.selectedDay.value);
+    final rangeEnd = Rxn<DateTime>();
+
+    List<DateTime> collectDates() {
+      if (isEdit) {
+        return [single.value];
+      }
+      final s = rangeStart.value;
+      if (s == null) {
+        return [];
+      }
+      final e = rangeEnd.value ?? s;
+      final start = DateTime(s.year, s.month, s.day);
+      final end = DateTime(e.year, e.month, e.day);
+      final out = <DateTime>[];
+      for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+        out.add(d);
+      }
+      return out;
+    }
+
+    final calendarStyle = CalendarStyle(
+      outsideDaysVisible: false,
+      todayDecoration: const BoxDecoration(
+        color: AppColors.primarySurface,
+        shape: BoxShape.circle,
+      ),
+      todayTextStyle: AppTextStyles.body.copyWith(color: AppColors.primary),
+      selectedDecoration: const BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+      ),
+      selectedTextStyle: AppTextStyles.body.copyWith(color: AppColors.surface),
+      rangeStartDecoration: const BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+      ),
+      rangeEndDecoration: const BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+      ),
+      rangeStartTextStyle:
+          AppTextStyles.body.copyWith(color: AppColors.surface),
+      rangeEndTextStyle: AppTextStyles.body.copyWith(color: AppColors.surface),
+      withinRangeTextStyle:
+          AppTextStyles.body.copyWith(color: AppColors.primary),
+      rangeHighlightColor: AppColors.primarySurface,
+    );
+
+    final headerStyle = HeaderStyle(
+      formatButtonVisible: false,
+      titleCentered: true,
+      titleTextStyle: AppTextStyles.bodyStrong,
+      leftChevronIcon:
+          const Icon(Icons.chevron_left, color: AppColors.textSecondary),
+      rightChevronIcon:
+          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+    );
+    final dowStyle = DaysOfWeekStyle(
+      weekdayStyle: AppTextStyles.caption,
+      weekendStyle: AppTextStyles.caption,
+    );
 
     Get.dialog(
       Dialog(
@@ -142,7 +203,7 @@ class ScheduleView extends GetView<ScheduleController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(existing == null ? '일정 추가' : '일정 수정',
+              Text(isEdit ? '일정 수정' : '일정 추가',
                   style: AppTextStyles.heading),
               const SizedBox(height: 16),
               TextField(
@@ -150,61 +211,45 @@ class ScheduleView extends GetView<ScheduleController> {
                 decoration: const InputDecoration(hintText: '일정 제목'),
               ),
               const SizedBox(height: 8),
-              if (existing == null)
-                Text('날짜를 눌러 여러 날 선택할 수 있어요',
+              if (!isEdit)
+                Text('시작일과 종료일을 선택하면 기간이 모두 추가돼요',
                     style: AppTextStyles.caption
                         .copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 4),
               Obx(
-                () => TableCalendar<void>(
-                  locale: 'ko_KR',
-                  firstDay: DateTime(2020),
-                  lastDay: DateTime(2100),
-                  focusedDay: focused.value,
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                    titleTextStyle: AppTextStyles.bodyStrong,
-                    leftChevronIcon: const Icon(Icons.chevron_left,
-                        color: AppColors.textSecondary),
-                    rightChevronIcon: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
-                  ),
-                  daysOfWeekStyle: DaysOfWeekStyle(
-                    weekdayStyle: AppTextStyles.caption,
-                    weekendStyle: AppTextStyles.caption,
-                  ),
-                  selectedDayPredicate: (d) =>
-                      picked.any((p) => isSameDay(p, d)),
-                  onDaySelected: (sel, foc) {
-                    focused.value = foc;
-                    if (existing != null) {
-                      picked.value = [sel];
-                      return;
-                    }
-                    final idx = picked.indexWhere((p) => isSameDay(p, sel));
-                    if (idx >= 0) {
-                      picked.removeAt(idx);
-                    } else {
-                      picked.add(sel);
-                    }
-                  },
-                  calendarStyle: CalendarStyle(
-                    outsideDaysVisible: false,
-                    todayDecoration: const BoxDecoration(
-                      color: AppColors.primarySurface,
-                      shape: BoxShape.circle,
-                    ),
-                    todayTextStyle: AppTextStyles.body
-                        .copyWith(color: AppColors.primary),
-                    selectedDecoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    selectedTextStyle: AppTextStyles.body
-                        .copyWith(color: AppColors.surface),
-                  ),
-                ),
+                () => isEdit
+                    ? TableCalendar<void>(
+                        locale: 'ko_KR',
+                        firstDay: DateTime(2020),
+                        lastDay: DateTime(2100),
+                        focusedDay: focused.value,
+                        headerStyle: headerStyle,
+                        daysOfWeekStyle: dowStyle,
+                        calendarStyle: calendarStyle,
+                        selectedDayPredicate: (d) =>
+                            isSameDay(d, single.value),
+                        onDaySelected: (sel, foc) {
+                          single.value = sel;
+                          focused.value = foc;
+                        },
+                      )
+                    : TableCalendar<void>(
+                        locale: 'ko_KR',
+                        firstDay: DateTime(2020),
+                        lastDay: DateTime(2100),
+                        focusedDay: focused.value,
+                        headerStyle: headerStyle,
+                        daysOfWeekStyle: dowStyle,
+                        calendarStyle: calendarStyle,
+                        rangeSelectionMode: RangeSelectionMode.toggledOn,
+                        rangeStartDay: rangeStart.value,
+                        rangeEndDay: rangeEnd.value,
+                        onRangeSelected: (s, e, foc) {
+                          rangeStart.value = s;
+                          rangeEnd.value = e;
+                          focused.value = foc;
+                        },
+                      ),
               ),
               const SizedBox(height: 16),
               Row(
@@ -228,14 +273,15 @@ class ScheduleView extends GetView<ScheduleController> {
                     child: ElevatedButton(
                       onPressed: () {
                         final title = titleController.text.trim();
-                        if (title.isEmpty || picked.isEmpty) {
+                        final dates = collectDates();
+                        if (title.isEmpty || dates.isEmpty) {
                           return;
                         }
                         Get.back();
-                        if (existing == null) {
-                          controller.createMany(title, picked.toList());
+                        if (isEdit) {
+                          controller.edit(existing.id, title, dates.first);
                         } else {
-                          controller.edit(existing.id, title, picked.first);
+                          controller.createMany(title, dates);
                         }
                       },
                       child: const Text('확인'),
