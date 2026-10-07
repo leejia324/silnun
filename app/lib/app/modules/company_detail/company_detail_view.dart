@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/company_model.dart';
+import '../../data/models/review_model.dart';
 import 'company_detail_controller.dart';
 
 class CompanyDetailView extends GetView<CompanyDetailController> {
@@ -48,7 +49,7 @@ class CompanyDetailView extends GetView<CompanyDetailController> {
               _divider(),
               _laborSection(d),
               _divider(),
-              _reviewSection(),
+              _reviewSection(context),
             ],
           ),
         );
@@ -237,19 +238,152 @@ class CompanyDetailView extends GetView<CompanyDetailController> {
     );
   }
 
-  Widget _reviewSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _reviewSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('이전 실습생 후기', style: AppTextStyles.heading),
-        Obx(
-          () => Text(
-            '${controller.reviewCount.value}명 참여',
-            style:
-                AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('이전 실습생 후기', style: AppTextStyles.heading),
+            Obx(
+              () => Text(
+                '${controller.reviews.length}명 참여',
+                style: AppTextStyles.caption
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Obx(() {
+          if (controller.reviews.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('아직 후기가 없어요. 첫 후기를 남겨보세요',
+                  style: AppTextStyles.body
+                      .copyWith(color: AppColors.textSecondary)),
+            );
+          }
+          return Column(
+            children: controller.reviews
+                .map((r) => _ReviewCard(review: r))
+                .toList(),
+          );
+        }),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => _showReviewEditor(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.border),
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: AppTextStyles.button,
+            ),
+            child: const Text('후기 작성하기'),
           ),
         ),
       ],
+    );
+  }
+
+  void _showReviewEditor(BuildContext context) {
+    final textController = TextEditingController();
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('후기 작성', style: AppTextStyles.heading),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: '실습 경험을 공유해주세요',
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.background,
+                        foregroundColor: AppColors.textSecondary,
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: AppTextStyles.button,
+                      ),
+                      child: const Text('취소'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final content = textController.text.trim();
+                        if (content.isEmpty) {
+                          return;
+                        }
+                        Get.back();
+                        controller.addReview(content);
+                      },
+                      child: const Text('등록'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.review});
+
+  final Review review;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = review.createdAt;
+    final date =
+        '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(review.content, style: AppTextStyles.body),
+          const SizedBox(height: 8),
+          Text(date,
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textDisabled)),
+        ],
+      ),
     );
   }
 }

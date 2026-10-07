@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../core/utils/app_snackbar.dart';
 import '../../data/models/company_model.dart';
+import '../../data/models/review_model.dart';
 import '../../data/repositories/checklist_repository.dart';
 import '../../data/repositories/company_repository.dart';
 import '../../routes/app_routes.dart';
@@ -12,15 +13,19 @@ class CompanyDetailController extends GetxController {
   final _checklistRepository = ChecklistRepository();
 
   final detail = Rxn<CompanyDetail>();
-  final reviewCount = 0.obs;
+  final reviews = <Review>[].obs;
   final isLoading = false.obs;
   final isStarting = false.obs;
+  final isPostingReview = false.obs;
+
+  String _companyId = '';
 
   @override
   void onInit() {
     super.onInit();
     final id = Get.arguments;
     if (id is String) {
+      _companyId = id;
       load(id);
     }
   }
@@ -29,11 +34,27 @@ class CompanyDetailController extends GetxController {
     isLoading.value = true;
     try {
       detail.value = await _repository.detail(id);
-      reviewCount.value = await _repository.reviewCount(id);
+      reviews.value = await _repository.reviews(id);
     } catch (_) {
       AppSnackbar.error('기업 정보를 불러오지 못했어요.');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> addReview(String content) async {
+    if (_companyId.isEmpty) {
+      return;
+    }
+    isPostingReview.value = true;
+    try {
+      await _repository.createReview(_companyId, content);
+      reviews.value = await _repository.reviews(_companyId);
+      AppSnackbar.success('후기를 등록했어요.');
+    } catch (_) {
+      AppSnackbar.error('후기를 등록하지 못했어요.');
+    } finally {
+      isPostingReview.value = false;
     }
   }
 
