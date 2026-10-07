@@ -3,20 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/utils/app_snackbar.dart';
+import '../../../data/repositories/user_repository.dart';
 import '../../../routes/app_routes.dart';
 
 class SignupController extends GetxController {
+  final _userRepository = UserRepository();
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final passwordConfirmController = TextEditingController();
+  final nameController = TextEditingController();
+  final schoolController = TextEditingController();
+  final gradeController = TextEditingController();
   final isLoading = false.obs;
 
   Future<void> signup() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
     final confirm = passwordConfirmController.text;
+    final name = nameController.text.trim();
+    final school = schoolController.text.trim();
+    final grade = gradeController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        confirm.isEmpty ||
+        name.isEmpty ||
+        school.isEmpty ||
+        grade.isEmpty) {
       AppSnackbar.info('모든 항목을 입력해주세요.');
       return;
     }
@@ -30,6 +44,12 @@ class SignupController extends GetxController {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
+      );
+      await _userRepository.updateProfile(
+        email: email,
+        name: name,
+        school: school,
+        grade: grade,
       );
       Get.offAllNamed(Routes.home);
     } on FirebaseAuthException catch (e) {
@@ -57,6 +77,9 @@ class SignupController extends GetxController {
     emailController.dispose();
     passwordController.dispose();
     passwordConfirmController.dispose();
+    nameController.dispose();
+    schoolController.dispose();
+    gradeController.dispose();
     super.onClose();
   }
 }

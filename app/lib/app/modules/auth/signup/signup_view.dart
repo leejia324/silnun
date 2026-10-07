@@ -54,6 +54,24 @@ class SignupView extends GetView<SignupController> {
                           controller: controller.passwordConfirmController,
                           obscure: true,
                         ),
+                        const SizedBox(height: 30),
+                        _Field(
+                          label: '이름',
+                          hint: '이름을 입력해주세요',
+                          controller: controller.nameController,
+                        ),
+                        const SizedBox(height: 30),
+                        _Field(
+                          label: '학교',
+                          hint: '학교명을 입력해주세요',
+                          controller: controller.schoolController,
+                        ),
+                        const SizedBox(height: 30),
+                        _Field(
+                          label: '학년',
+                          hint: '예: 3학년',
+                          controller: controller.gradeController,
+                        ),
                         const SizedBox(height: 40),
                         const Spacer(),
                         Center(

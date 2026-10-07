@@ -10,11 +10,6 @@ class MypageView extends GetView<MypageController> {
 
   @override
   Widget build(BuildContext context) {
-    final email = controller.email;
-    final name = controller.displayName;
-    final initial = name.length >= 2
-        ? name.substring(0, 2)
-        : (name.isNotEmpty ? name : '?');
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -23,42 +18,48 @@ class MypageView extends GetView<MypageController> {
           children: [
             Text('마이페이지', style: AppTextStyles.title),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+            Obx(() {
+              final name = controller.displayName;
+              final initial = name.length >= 2
+                  ? name.substring(0, 2)
+                  : (name.isNotEmpty ? name : '?');
+              return Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(initial,
+                        style: AppTextStyles.bodyStrong
+                            .copyWith(color: AppColors.surface)),
                   ),
-                  child: Text(initial,
-                      style: AppTextStyles.bodyStrong
-                          .copyWith(color: AppColors.surface)),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.heading),
+                        const SizedBox(height: 4),
+                        Text(
+                          controller.subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.heading),
-                      const SizedBox(height: 4),
-                      Text(
-                        email.isEmpty ? '이메일 정보 없음' : email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.caption
-                            .copyWith(color: AppColors.textSecondary),
-                      ),
-                    ],
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              );
+            }),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20),
