@@ -53,58 +53,76 @@ class ScheduleView extends GetView<ScheduleController> {
             const SizedBox(height: 4),
             Obx(() {
               controller.schedules.length;
-              return TableCalendar<ScheduleItem>(
-                locale: 'ko_KR',
-                firstDay: DateTime(2020),
-                lastDay: DateTime(2100),
-                focusedDay: controller.focusedDay.value,
-                selectedDayPredicate: (d) =>
-                    isSameDay(d, controller.selectedDay.value),
-                eventLoader: controller.eventsOf,
-                onDaySelected: controller.selectDay,
-                onPageChanged: (day) => controller.focusedDay.value = day,
-                headerStyle: HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: false,
-                  leftChevronVisible: false,
-                  rightChevronVisible: false,
-                  titleTextStyle: AppTextStyles.bodyStrong,
-                  headerPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                ),
-                availableGestures: AvailableGestures.horizontalSwipe,
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: AppTextStyles.caption
-                      .copyWith(color: AppColors.textDisabled),
-                  weekendStyle: AppTextStyles.caption
-                      .copyWith(color: AppColors.textDisabled),
-                ),
-                calendarStyle: CalendarStyle(
-                  outsideDaysVisible: false,
-                  defaultTextStyle: AppTextStyles.body,
-                  weekendTextStyle: AppTextStyles.body,
-                  todayDecoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+              final today = DateTime.now();
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TableCalendar<ScheduleItem>(
+                  locale: 'ko_KR',
+                  firstDay: DateTime(2020),
+                  lastDay: DateTime(2100),
+                  focusedDay: controller.focusedDay.value,
+                  selectedDayPredicate: (d) =>
+                      isSameDay(d, controller.selectedDay.value),
+                  eventLoader: controller.eventsOf,
+                  onDaySelected: controller.selectDay,
+                  onPageChanged: (day) => controller.focusedDay.value = day,
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: false,
+                    leftChevronVisible: false,
+                    rightChevronVisible: false,
+                    titleTextStyle: AppTextStyles.bodyStrong,
+                    headerPadding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   ),
-                  todayTextStyle:
-                      AppTextStyles.body.copyWith(color: AppColors.surface),
-                  selectedDecoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+                  availableGestures: AvailableGestures.horizontalSwipe,
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: AppTextStyles.caption
+                        .copyWith(color: AppColors.textDisabled),
+                    weekendStyle: AppTextStyles.caption
+                        .copyWith(color: AppColors.textDisabled),
                   ),
-                  selectedTextStyle:
-                      AppTextStyles.body.copyWith(color: AppColors.surface),
-                  markerDecoration: const BoxDecoration(
-                    color: AppColors.danger,
-                    shape: BoxShape.circle,
+                  calendarStyle: const CalendarStyle(
+                    outsideDaysVisible: false,
                   ),
-                  markerSize: 5,
-                  markersMaxCount: 1,
-                  markerMargin: const EdgeInsets.only(top: 2),
+                  calendarBuilders: CalendarBuilders<ScheduleItem>(
+                    defaultBuilder: (context, day, _) => _dayCell(
+                      day,
+                      AppTextStyles.body,
+                    ),
+                    todayBuilder: (context, day, _) => _filledCircle(day),
+                    selectedBuilder: (context, day, _) =>
+                        isSameDay(day, today)
+                            ? _filledCircle(day)
+                            : _ringCircle(day),
+                    markerBuilder: (context, day, events) {
+                      if (events.isEmpty) {
+                        return null;
+                      }
+                      if (isSameDay(day, today) ||
+                          isSameDay(day, controller.selectedDay.value)) {
+                        return const SizedBox.shrink();
+                      }
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 7),
+                          child: Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             }),
+            const SizedBox(height: 14),
             const Divider(height: 1, color: AppColors.border),
             Expanded(
               child: Obx(() {
@@ -125,6 +143,42 @@ class ScheduleView extends GetView<ScheduleController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _dayCell(DateTime day, TextStyle style) {
+    return Center(child: Text('${day.day}', style: style));
+  }
+
+  Widget _filledCircle(DateTime day) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+        child: Text('${day.day}',
+            style: AppTextStyles.body.copyWith(color: AppColors.surface)),
+      ),
+    );
+  }
+
+  Widget _ringCircle(DateTime day) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 1.5),
+        ),
+        child: Text('${day.day}',
+            style: AppTextStyles.body.copyWith(color: AppColors.primary)),
       ),
     );
   }
