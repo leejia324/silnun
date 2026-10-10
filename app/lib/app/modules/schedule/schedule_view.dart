@@ -126,18 +126,35 @@ class ScheduleView extends GetView<ScheduleController> {
             const Divider(height: 1, color: AppColors.border),
             Expanded(
               child: Obx(() {
-                final items = [...controller.schedules]
-                  ..sort((a, b) => a.date.compareTo(b.date));
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text('등록된 일정이 없어요',
-                        style: AppTextStyles.body
-                            .copyWith(color: AppColors.textDisabled)),
-                  );
-                }
+                final sel = controller.selectedDay.value;
+                final items = controller.selectedSchedules;
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  children: _buildGrouped(context, items),
+                  children: [
+                    Text(
+                      '${sel.month}월 ${sel.day}일 (${_weekdays[sel.weekday - 1]})',
+                      style: AppTextStyles.bodyStrong,
+                    ),
+                    const SizedBox(height: 14),
+                    if (items.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Center(
+                          child: Text('이 날짜에 일정이 없어요',
+                              style: AppTextStyles.body.copyWith(
+                                  color: AppColors.textDisabled)),
+                        ),
+                      )
+                    else
+                      ...items.map((s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ScheduleCard(
+                              schedule: s,
+                              onTap: () => _showEditor(context, existing: s),
+                              onDelete: () => controller.remove(s.id),
+                            ),
+                          )),
+                  ],
                 );
               }),
             ),
@@ -154,8 +171,8 @@ class ScheduleView extends GetView<ScheduleController> {
   Widget _filledCircle(DateTime day) {
     return Center(
       child: Container(
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: AppColors.primary,
@@ -170,8 +187,8 @@ class ScheduleView extends GetView<ScheduleController> {
   Widget _ringCircle(DateTime day) {
     return Center(
       child: Container(
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -181,27 +198,6 @@ class ScheduleView extends GetView<ScheduleController> {
             style: AppTextStyles.body.copyWith(color: AppColors.primary)),
       ),
     );
-  }
-
-  List<Widget> _buildGrouped(BuildContext context, List<ScheduleItem> items) {
-    final widgets = <Widget>[];
-    int? currentMonth;
-    for (final s in items) {
-      if (s.date.month != currentMonth) {
-        currentMonth = s.date.month;
-        widgets.add(Padding(
-          padding: EdgeInsets.only(top: widgets.isEmpty ? 0 : 20, bottom: 8),
-          child: Text('${s.date.month}월',
-              style: AppTextStyles.caption
-                  .copyWith(color: AppColors.textSecondary)),
-        ));
-      }
-      widgets.add(_ScheduleRow(
-        schedule: s,
-        onTap: () => _showEditor(context, existing: s),
-      ));
-    }
-    return widgets;
   }
 
   void _showEditor(BuildContext context, {ScheduleItem? existing}) {
@@ -404,36 +400,31 @@ String _ddayLabel(DateTime date) {
   return diff > 0 ? 'D-$diff' : 'D+${-diff}';
 }
 
-class _ScheduleRow extends StatelessWidget {
-  const _ScheduleRow({required this.schedule, required this.onTap});
+class _ScheduleCard extends StatelessWidget {
+  const _ScheduleCard({
+    required this.schedule,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   final ScheduleItem schedule;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 32,
-              child: Column(
-                children: [
-                  Text('${schedule.date.day}',
-                      style: AppTextStyles.heading),
-                  const SizedBox(height: 2),
-                  Text(_weekdays[schedule.date.weekday - 1],
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textDisabled)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,12 +457,18 @@ class _ScheduleRow extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 6),
                   Text(_ddayLabel(schedule.date),
                       style: AppTextStyles.caption
                           .copyWith(color: AppColors.danger)),
                 ],
               ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: onDelete,
+              child: const Icon(Icons.delete_outline,
+                  size: 20, color: AppColors.textDisabled),
             ),
           ],
         ),
