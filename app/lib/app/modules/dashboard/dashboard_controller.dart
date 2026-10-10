@@ -57,8 +57,6 @@ class DashboardController extends GetxController {
     isLoading.value = false;
   }
 
-  void goSearch() => Get.find<HomeController>().changeTab(1);
-
   void goSchedule() => Get.find<HomeController>().changeTab(3);
 
   void openChecklist(int id) =>

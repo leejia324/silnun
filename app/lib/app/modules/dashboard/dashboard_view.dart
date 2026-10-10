@@ -29,9 +29,7 @@ class DashboardView extends GetView<DashboardController> {
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 20),
-              _searchBar(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               _sectionHeader('진행 중인 체크리스트'),
               const SizedBox(height: 12),
               Obx(() {
@@ -79,29 +77,6 @@ class DashboardView extends GetView<DashboardController> {
               }),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _searchBar() {
-    return GestureDetector(
-      onTap: controller.goSearch,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.search, color: AppColors.textSecondary),
-            const SizedBox(width: 10),
-            Text('기업명·업종으로 검색해보세요',
-                style: AppTextStyles.body
-                    .copyWith(color: AppColors.textDisabled)),
-          ],
         ),
       ),
     );
@@ -186,8 +161,23 @@ class _ScheduleMini extends StatelessWidget {
 
   final ScheduleItem schedule;
 
+  static const _weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+
+  String get _dday {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target =
+        DateTime(schedule.date.year, schedule.date.month, schedule.date.day);
+    final diff = target.difference(today).inDays;
+    if (diff == 0) {
+      return 'D-DAY';
+    }
+    return diff > 0 ? 'D-$diff' : 'D+${-diff}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final d = schedule.date;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -198,16 +188,22 @@ class _ScheduleMini extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
+            width: 48,
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.primarySurface,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text('${schedule.date.day}',
-                style: AppTextStyles.bodyStrong
-                    .copyWith(color: AppColors.primary)),
+            child: Column(
+              children: [
+                Text('${d.month}월',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.primary)),
+                Text('${d.day}',
+                    style: AppTextStyles.heading
+                        .copyWith(color: AppColors.primary)),
+              ],
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -218,14 +214,25 @@ class _ScheduleMini extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyStrong),
-                const SizedBox(height: 2),
-                Text(
-                  '${schedule.date.year}.${schedule.date.month.toString().padLeft(2, '0')}.${schedule.date.day.toString().padLeft(2, '0')}',
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.textSecondary),
-                ),
+                const SizedBox(height: 4),
+                Text('${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')} (${_weekdays[d.weekday - 1]})',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSecondary)),
               ],
             ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(_dday,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.surface,
+                  fontWeight: FontWeight.w700,
+                )),
           ),
         ],
       ),
